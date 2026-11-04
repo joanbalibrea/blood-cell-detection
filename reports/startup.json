@@ -1,0 +1,7 @@
+{
+  "torch": "2.11.0+cpu",
+  "torch_cuda_build": null,
+  "cuda_available": false,
+  "gpu_count": 0,
+  "nvidia_smi": "nvidia-smi executable unavailable"
+}

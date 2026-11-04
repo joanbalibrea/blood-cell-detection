@@ -1,0 +1,5 @@
+kaggle==2.2.5
+six==1.17.0
+Pillow==13.0.0
+python-dotenv==1.2.4
+dulwich==1.2.20

@@ -1,0 +1,9 @@
+{
+  "packages/opencv_python-4.11.0.86-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl": "6b02611523803495003bd87362db3e1d2a0454a6a63025dc6658a9830570aa0d",
+  "packages/polars-1.38.1-py3-none-any.whl": "a29479c48fed4984d88b656486d221f638cba45d3e961631a50ee5fdde38cb2c",
+  "packages/polars_runtime_32-1.38.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl": "e8a5f7a8125e2d50e2e060296551c929aec09be23a9edcb2b12ca923f555a5ba",
+  "packages/ultralytics-8.4.32-py3-none-any.whl": "88093e6c311a1ea3dd3369481249fe202d4e8e946d24902b22c00850e2e29fae",
+  "packages/ultralytics_thop-2.2.4-py3-none-any.whl": "a2202872c7d0b2a93c129cad692bfab36d76cc70eb3671cc8093195a8fd3f9d0",
+  "yolo26n.pt": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef",
+  "yolo26s.pt": "646f8bc3fe0a656803d95c294f7852321748cb29d13466a1af8862e2db384a1b"
+}

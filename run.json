@@ -1,0 +1,5 @@
+{
+  "dataset": "joanbalibrearull/txl-pbc-private-detection",
+  "kernel": "joanbalibrearull/txl-pbc-yolo26-training",
+  "version": 5
+}

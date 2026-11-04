@@ -1,0 +1,75 @@
+{
+  "classes": [
+    "WBC",
+    "RBC",
+    "Platelets"
+  ],
+  "splits": {
+    "train": {
+      "images": 882,
+      "objects": 12510,
+      "classes": {
+        "RBC": 11220,
+        "WBC": 908,
+        "Platelets": 382
+      },
+      "dimensions": {
+        "65536x4292542531": 472,
+        "65536x4294836270": 340,
+        "256x256": 70
+      },
+      "png_color_types": {
+        "2": 358,
+        "110": 340,
+        "6": 70,
+        "8": 101,
+        "5": 13
+      }
+    },
+    "val": {
+      "images": 252,
+      "objects": 3752,
+      "classes": {
+        "RBC": 3383,
+        "WBC": 257,
+        "Platelets": 112
+      },
+      "dimensions": {
+        "65536x4292542531": 139,
+        "256x256": 16,
+        "65536x4294836270": 97
+      },
+      "png_color_types": {
+        "2": 98,
+        "6": 16,
+        "110": 97,
+        "8": 41
+      }
+    },
+    "test": {
+      "images": 126,
+      "objects": 1881,
+      "classes": {
+        "RBC": 1699,
+        "WBC": 133,
+        "Platelets": 49
+      },
+      "dimensions": {
+        "65536x4292542531": 63,
+        "65536x4294836270": 49,
+        "256x256": 14
+      },
+      "png_color_types": {
+        "2": 44,
+        "110": 49,
+        "6": 14,
+        "8": 18,
+        "5": 1
+      }
+    }
+  },
+  "errors": [],
+  "cross_split_duplicates": [],
+  "total_images": 1260,
+  "total_objects": 18143
+}

@@ -1,0 +1,38 @@
+{
+  "phase": "complete",
+  "epoch": 100,
+  "config": {
+    "model": "/kaggle/input/yolo26-offline-training-assets/yolo26s.pt",
+    "epochs": 100,
+    "imgsz": 640,
+    "batch": 16,
+    "patience": 20,
+    "seed": 42,
+    "device": 0,
+    "workers": 2,
+    "deterministic": true,
+    "amp": true,
+    "project": "/kaggle/working/runs",
+    "name": "blood_cells",
+    "exist_ok": true,
+    "plots": true,
+    "save": true,
+    "save_period": 10,
+    "close_mosaic": 10
+  },
+  "gpu": "Tesla T4",
+  "ultralytics": "8.4.32",
+  "torch": "2.11.0+cu128",
+  "elapsed_seconds": 2416.656389951706,
+  "metrics": {
+    "metrics/precision(B)": 0.954732375851803,
+    "metrics/recall(B)": 0.9628813684248088,
+    "metrics/mAP50(B)": 0.9837478289280064,
+    "metrics/mAP50-95(B)": 0.879796049335907
+  },
+  "train_loss": {
+    "train/box_loss": 0.39832,
+    "train/cls_loss": 0.17445,
+    "train/dfl_loss": 0.00417
+  }
+}
