@@ -59,6 +59,36 @@ def png_data(image: Image.Image) -> str:
     return "data:image/png;base64," + base64.b64encode(output.getvalue()).decode("ascii")
 
 
+def annotate_image(image, detections):
+    """Number every box; put long WBC subtype labels on a second line."""
+    annotated = image.copy()
+    width, height = image.size
+    draw = ImageDraw.Draw(annotated)
+    font = ImageFont.load_default(size=max(10, min(24, round(min(width, height) / 36))))
+    line_width = max(2, round(min(width, height) / 250))
+    # Draw WBC labels last so crowded RBC labels do not hide subtype predictions.
+    for detection in sorted(detections, key=lambda d: d["class_name"] == "WBC"):
+        box = list(detection["bbox"].values())
+        color = COLORS[detection["class_name"]]
+        if box[2] <= box[0] or box[3] <= box[1]:
+            continue
+        draw.rectangle(box, outline=color, width=line_width)
+        label = f"#{detection['number']} {detection['class_name']} D:{detection['confidence']:.2f}"
+        classification = detection.get("classification", {})
+        if classification.get("predicted_class"):
+            subtype = classification["predicted_class"].replace("immature_granulocytes", "Imm. granulocytes").replace("_", " ")
+            label += f"\n{subtype} C:{classification['confidence']:.2f}"
+            if classification.get("review_required"):
+                label += " [review]"
+        text_box = draw.multiline_textbbox((0, 0), label, font=font, spacing=2)
+        label_width, label_height = text_box[2] + 8, text_box[3] + 6
+        left = max(0, min(box[0], width - label_width))
+        top = max(0, min(box[1] - label_height, height - label_height))
+        draw.rectangle((left, top, min(width, left + label_width), min(height, top + label_height)), fill=color)
+        draw.multiline_text((left + 4, top + 1), label, fill="#0d131c", font=font, spacing=2)
+    return annotated
+
+
 class Detector:
     def __init__(self):
         self.lock = threading.Lock()
@@ -71,6 +101,8 @@ class Detector:
         self.end2end = False
 
     def load(self):
+        if self.model is not None:
+            return
         try:
             if not WEIGHTS.is_file():
                 raise FileNotFoundError("Missing models/best.pt. Restore your trained checkpoint and restart.")
@@ -99,7 +131,7 @@ class Detector:
                 )
                 LOG.warning(self.warning)
             self.names = {int(key): str(value) for key, value in model.names.items()}
-            if set(self.names.values()) != {"WBC", "RBC", "Platelets"} or len(self.names) != 3:
+            if self.names != {0: "WBC", 1: "RBC", 2: "Platelets"}:
                 raise RuntimeError(f"Unexpected checkpoint classes: {self.names}. Expected WBC, RBC, Platelets; no remapping was applied.")
             self.imgsz = int(model.ckpt.get("train_args", {}).get("imgsz", 640))
             self.end2end = bool(getattr(model.model.model[-1], "end2end", False))
@@ -113,7 +145,7 @@ class Detector:
 
     def status(self):
         return {"ready": self.model is not None, "device": "cpu", "classes": self.names,
-                "model": "YOLO26", "weights": self.source, "imgsz": self.imgsz,
+                "model": "YOLO26s", "weights": self.source, "imgsz": self.imgsz,
                 "end2end": self.end2end, "warning": self.warning, "error": self.error,
                 "max_upload_mb": 12, "max_pixels": MAX_PIXELS}
 
@@ -129,11 +161,6 @@ class Detector:
         width, height = image.size
         detections = []
         counts = {name: 0 for name in self.names.values()}
-        annotated = image.copy()
-        draw = ImageDraw.Draw(annotated)
-        font_size = max(10, min(24, round(min(width, height) / 36)))
-        font = ImageFont.load_default(size=font_size)
-        line_width = max(2, round(min(width, height) / 250))
         for index, (box, score, cls) in enumerate(zip(boxes, scores, classes), 1):
             class_id = int(cls)
             name = self.names[class_id]
@@ -144,20 +171,10 @@ class Detector:
             detections.append({"number": index, "class_id": class_id, "class_name": name,
                                "confidence": float(score), "bbox": dict(zip(
                                    ("x_min", "y_min", "x_max", "y_max"), box))})
-            color = COLORS[name]
-            draw.rectangle(box, outline=color, width=line_width)
-            label = f"{name} {score:.2f}"
-            text_box = draw.textbbox((0, 0), label, font=font)
-            label_width = text_box[2] + 8
-            label_height = text_box[3] + 6
-            left = max(0, min(box[0], width - label_width))
-            top = max(0, box[1] - label_height)
-            draw.rectangle((left, top, min(width, left + label_width), top + label_height), fill=color)
-            draw.text((left + 4, top + 1), label, fill="#0d131c", font=font)
         return {"image": {"width": width, "height": height}, "total_count": len(detections),
                 "counts": counts, "rbc_count": counts["RBC"], "wbc_count": counts["WBC"],
                 "platelet_count": counts["Platelets"], "confidence_threshold": confidence,
-                "detections": detections, "annotated_image": png_data(annotated),
+                "detections": detections, "annotated_image": png_data(annotate_image(image, detections)),
                 "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),
                 "model": self.status(), "coordinate_system": "Original image pixels after EXIF orientation",
                 "notice": "Object counts in this image, not clinical blood-cell concentrations."}

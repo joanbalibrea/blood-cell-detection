@@ -108,7 +108,7 @@ class CellScopeIntegration(unittest.TestCase):
         self.assertEqual(self.upload(data=large.getvalue()).status_code, 400)
 
     def test_static_frontend_and_private_paths(self):
-        self.assertIn("CellScope — Blood Cell Detection", self.client.get("/").text)
+        self.assertIn("CellScope — Integrated Blood Cell Analysis", self.client.get("/").text)
         for asset in ["app.js", "style.css"]:
             self.assertEqual(self.client.get("/static/" + asset).status_code, 200)
         for path in ["/.env", "/models/best.pt", "/dashboard/index.html", "/README.md"]:
