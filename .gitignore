@@ -6,6 +6,23 @@ __pycache__/
 .DS_Store
 staging/
 outputs/
-*.pt
-*.zip
 dashboard/data/status.json
+cellscope_app/model_check.jpg
+cellscope_app/test_artifacts/
+uploads/
+tmp/
+.pytest_cache/
+*.pyc
+/models/
+/TXL-PBC/
+# Datasets
+bloodmnist/
+Dataset_NeuNN/
+TXL-PBC/
+*.zip
+# Large model checkpoints
+*.pt
+*.pth
+*.ckpt
+# Generated files
+.DS_Store

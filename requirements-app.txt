@@ -1,0 +1,6 @@
+# Local inference only. The existing training/tooling requirements are separate.
+ultralytics==8.4.203
+Pillow==13.0.0
+fastapi==0.162.0
+uvicorn==0.54.0
+python-multipart==0.0.33

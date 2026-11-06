@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env*
+models/*
+outputs/*
+staging/*
+dashboard/data/*
+reports/generated/*
+run.json
+training/kernel-metadata.json
+!models/.gitkeep
+!outputs/.gitkeep

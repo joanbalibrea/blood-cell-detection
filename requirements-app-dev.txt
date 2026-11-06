@@ -1,0 +1,3 @@
+-r requirements-app.txt
+# Only needed for the integration test client; not needed to use the app.
+httpx==0.28.1

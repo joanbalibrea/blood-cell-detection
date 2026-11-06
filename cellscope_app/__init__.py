@@ -1,0 +1,1 @@
+"""Local CellScope inference application."""

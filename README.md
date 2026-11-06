@@ -2,7 +2,79 @@
 
 Private Kaggle GPU training, dataset auditing, held-out evaluation and an HTML monitoring dashboard for TXL-PBC. Classes: WBC, RBC and Platelets. The source dataset lives outside this repository at `../TXL-PBC`.
 
-**Current status:** dataset preparation and local checks passed, but Kaggle returned a CPU runtime despite GPU requests. Training is blocked; no fine-tuned model or measured accuracy is available. See the [execution report](reports/execution.md) for evidence and the required Kaggle account/runtime check.
+**Current status:** a trained YOLO26 checkpoint is now supplied locally, with 100 epochs recorded in its metadata. The new local inference application is described below. Some historical reports still describe earlier failed Kaggle attempts; those reports are not a description of the current inference application's status or a new accuracy evaluation.
+
+## CellScope — local blood cell detection
+
+The FastAPI application in [cellscope_app](cellscope_app/) detects **WBC, RBC, and Platelets** using your existing trained checkpoint. It uses CPU, runs on Apple Silicon, and needs no Kaggle, CUDA, API key, or internet after setup. The existing [training dashboard](dashboard/) remains separate.
+
+### Start the application
+
+Open Terminal and paste this single command (works on another day and after restarting VS Code):
+
+```sh
+zsh "/Users/bali/Documents/Master UIC/M4 - Advanced AI/Blood cells project/start_cellscope.command"
+```
+
+Keep the Terminal window open. Once it says “Application startup complete”, open **<http://127.0.0.1:8000>** in your browser. You can also double-click [start_cellscope.command](start_cellscope.command) in Finder, or run the **CellScope: local inference** VS Code task. If port 8000 is already occupied by CellScope, use the existing page; otherwise stop the other server first.
+
+To stop: click the Terminal window and press **Control+C**. To restart: run the same command again. The launcher finds this project from its own location, even if your current Terminal folder is elsewhere.
+
+### First-time setup or reinstall
+
+The existing `.venv` is configured and the application dependencies are installed. If rebuilding that environment, use Python 3.11 or later with PyTorch support for your Mac (this installation uses Python 3.14):
+
+```sh
+cd "/Users/bali/Documents/Master UIC/M4 - Advanced AI/Blood cells project"
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-app.txt
+```
+
+Only setup requires internet. [requirements-app.txt](requirements-app.txt) is separate from the existing training/tooling [requirements.txt](requirements.txt). Do not install CUDA packages for this app.
+
+### Analyze and export
+
+1. Browse for, or drop, a JPG/JPEG/PNG microscopy image into the upload area. Held-out examples are in `../TXL-PBC/images/test/`. Limits: **12 MB**, **16 megapixels**, one still image at a time. Transparent pixels are composited on white and JPEG orientation is respected.
+2. Leave confidence at **0.25** initially and click **Detect Cells**. All detections and counts come from the trained model, never from dataset labels.
+3. Compare the original and annotated images. **RBC = orange**, **WBC = purple**, **Platelets = green**. Labels show the predicted class and actual model confidence. Click either image for a larger view with zoom and scrolling.
+4. Adjust confidence from **0.05–0.95**, then click **Detect Cells** again. This clears the previous result and reruns inference. A higher threshold usually retains fewer predictions. Model scores are not calibrated clinical probabilities.
+5. Review counts and sort the detection table by class or confidence. Coordinates are floating-point pixels in the original image after EXIF orientation, reported as `(x_min, y_min, x_max, y_max)`. The table rounds for readability; exports preserve numeric precision.
+6. Use **PNG** for the annotated image, **CSV** for every detection, or **JSON** for the summary and detections. Downloads match the displayed run. If the embedded VS Code preview does not save a file, open the same local URL in Safari or Chrome. **Clear results** keeps the image; **×** removes it so you can choose another.
+
+Counts are **objects detected in this image**, not blood-cell concentrations. The model does not identify white-cell subtypes. This is an educational/research tool, not a clinically validated diagnostic application. Overlapping cells may have overlapping boxes; detections can still be missed or mistaken.
+
+### Checkpoint integrity and recovery
+
+The app first loads **[models/best.pt](models/best.pt)**. During setup that file's ZIP headers were unreadable by PyTorch and contained text replacement bytes. The existing extracted **`models/best/`** checkpoint was intact: its class mapping was `{0: 'WBC', 1: 'RBC', 2: 'Platelets'}` and its training metadata recorded 100 epochs at image size 640.
+
+When the main archive is unreadable, the loader can repackage those **existing extracted checkpoint records**, byte for byte, into a temporary archive. It loads the same supplied trained model, then deletes the temporary archive. A visible banner and `/api/health` report this recovery source. Neither original model source is changed. No official/pretrained replacement is downloaded or used.
+
+For direct loading, restore a fresh **binary** copy of your trained `best.pt` to `models/best.pt` and restart the server. Do not paste binary weights through a text editor. If neither copy loads, the app reports model unavailable and refuses inference rather than inventing results.
+
+The supplied checkpoint's detection head reports `end2end=False`. Inference uses Ultralytics' own postprocessing without overriding NMS or adding duplicate suppression. The original training image size (640) is read from checkpoint metadata. CPU is the supported and tested device; MPS is not enabled.
+
+### API, privacy, and tests
+
+- `GET /api/health`: readiness, actual class mapping, CPU, model source, image size, recovery warning.
+- `POST /api/analyze?confidence=0.25`: multipart upload with one `file`; returns original dimensions, counts, class IDs/names, exact confidence scores, pixel boxes, timing, and an annotated PNG data URI.
+- Interactive API documentation: <http://127.0.0.1:8000/docs>.
+- Invalid image/empty upload: 400; unsupported extension: 415; oversized upload: 413; invalid confidence: 422; unavailable model: 503.
+
+Only the app's dedicated static folder is served. The project root, model files, datasets, `.env`, and training dashboard are not exposed. The server binds to this computer's loopback interface. Uploads/results are not kept in an application database or saved to the project; multipart temporary files are closed after each request. Results remain in browser memory until cleared or the page closes; downloaded files remain wherever your browser saves them. This page uses no external fonts, scripts, or services.
+
+Run the integration checks (they load the real local checkpoint and use held-out images):
+
+```sh
+cd "/Users/bali/Documents/Master UIC/M4 - Advanced AI/Blood cells project"
+# Only if test dependencies are missing:
+# .venv/bin/python -m pip install -r requirements-app-dev.txt
+.venv/bin/python -m unittest cellscope_app.tests.test_api -v
+```
+
+These functional checks do not constitute a new precision/recall or clinical validation study.
+
+See the [local application validation report](reports/cellscope_validation.md) for executed checks, checkpoint recovery details, and verification limits.
 
 ## Setup
 
@@ -71,7 +143,7 @@ These are research detections, with no clinical validation performed. Dataset ri
 
 ## Git
 
-Initialized on branch `main`, with no commit and no remote push. Secrets, the local environment, dataset staging and model files are ignored. macOS command-line Git requires developer tools on this machine; the installed Dulwich package can inspect the repository in the meantime:
+Initialized on branch `main`, with commit and push. Secrets, the local environment, dataset staging and model files are ignored. macOS command-line Git requires developer tools on this machine; the installed Dulwich package can inspect the repository in the meantime:
 
 ```sh
 python -m dulwich status
